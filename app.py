@@ -19,6 +19,14 @@ def get_db_connection():
     #return the connection object
     return conn
 
+def get_post(post_id):
+    conn = get_db_connection()
+    post = conn.execute('SELECT * FROM posts WHERE id = ?', (post_id,)).fetchone()
+    conn.close()
+
+    if post is None:
+        abort(404)
+    return post
 
 # use the app.route() decorator to create a Flask view function called index()
 @app.route('/')
@@ -48,9 +56,9 @@ def create():
         #display an eror maessage if title or content is  not submitted
         #make a databse connection and insert the content for the blog post
         if not title:
-            flash("Title is required")
+            flash('Title is required')
         elif not content:
-            flash("Content is required")
+            flash('Content is required')
         else:
             conn = get_db_connection()
             #insert data into database
@@ -60,6 +68,30 @@ def create():
             return redirect(url_for('index'))
 
     return render_template('create.html')
+
+#create a route to edit a post. load page with get or post method
+#pass post id as a url parameter
+@app.route('/<int:id>/edit/', methods=('GET', 'POST'))
+def edit(id):
+    post = get_post(id)
+    if request.method == 'POST':
+        title = request.form['title']
+        content = request.form['content']
+
+        if not title:
+            flash('Title is required')
+        elif not content:
+            flash('Content is required')
+        else:
+           conn = get_db_connection
+           conn.execute('UPDATE posts SET title = ?, content = ? WHERE id = ?', (title, content, id)) 
+           conn.commit()
+           conn.close()
+           return redirect(url_for('index'))
+
+
+        
+    return render_template('edit.html', post=post)
 
 
 
